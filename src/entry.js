@@ -31,7 +31,16 @@ const Shuang = {
     },
     importedJS: [],
     modeList: [],
-    action: {}
+    action: {},
+    timedPractice: {
+      isActive: false,
+      timer: null,
+      timeRemaining: 0,
+      totalQuestions: 0,
+      completedQuestions: 0,
+      correctAnswers: 0,
+      startTime: 0
+    }
   },
 }
 

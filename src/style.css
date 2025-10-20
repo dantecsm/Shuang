@@ -63,6 +63,206 @@ body {
   margin: 0;
 }
 
+/* 限时练习相关样式 */
+.timed-practice-toggle {
+  background-color: #007700;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.timed-practice-toggle:hover {
+  background-color: #005500;
+}
+
+.timed-practice-toggle.active {
+  background-color: #ff6600;
+}
+
+.timed-practice-btn {
+  background-color: #007700;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: bold;
+  margin: 0 5px;
+}
+
+.timed-practice-btn:hover {
+  background-color: #005500;
+}
+
+.timed-practice-btn:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+#timed-practice-panel {
+  background-color: #f0f8ff;
+  border: 2px solid #007700;
+  border-radius: 5px;
+  margin: 10px auto;
+  padding: 10px;
+}
+
+#timed-practice-status {
+  background-color: #fff8dc;
+  border: 2px solid #ff6600;
+  border-radius: 5px;
+  margin: 10px auto;
+  padding: 10px;
+  font-weight: bold;
+}
+
+#timed-practice-status .menu {
+  margin: 5px 10px;
+}
+
+#time-remaining {
+  color: #ff6600;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+#completed-count, #total-count {
+  color: #007700;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+#accuracy {
+  color: #007700;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+/* 限时练习结果弹窗 */
+.timed-practice-result {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: white;
+  border: 3px solid #007700;
+  border-radius: 10px;
+  padding: 20px;
+  text-align: center;
+  z-index: 1000;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  min-width: 300px;
+}
+
+.timed-practice-result h3 {
+  margin: 0 0 15px 0;
+  color: #007700;
+  font-size: 24px;
+}
+
+.timed-practice-result .result-stats {
+  margin: 10px 0;
+  font-size: 16px;
+}
+
+.timed-practice-result .result-stats span {
+  font-weight: bold;
+  color: #007700;
+}
+
+.timed-practice-result button {
+  background-color: #007700;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+  margin: 10px 5px;
+}
+
+.timed-practice-result button:hover {
+  background-color: #005500;
+}
+
+.timed-practice-result.success {
+  border-color: #00aa00;
+}
+
+.timed-practice-result.success h3 {
+  color: #00aa00;
+}
+
+.timed-practice-result.failure {
+  border-color: #ff0000;
+}
+
+.timed-practice-result.failure h3 {
+  color: #ff0000;
+}
+
+/* 暗色模式下的限时练习样式 */
+.dark-mode #timed-practice-panel {
+  background-color: #2a2a2a;
+  border-color: #77FF77;
+}
+
+.dark-mode #timed-practice-status {
+  background-color: #3a3a2a;
+  border-color: #ffaa00;
+}
+
+.dark-mode .timed-practice-toggle {
+  background-color: #77FF77;
+  color: #333;
+}
+
+.dark-mode .timed-practice-toggle:hover {
+  background-color: #55DD55;
+}
+
+.dark-mode .timed-practice-toggle.active {
+  background-color: #ffaa00;
+  color: #333;
+}
+
+.dark-mode .timed-practice-btn {
+  background-color: #77FF77;
+  color: #333;
+}
+
+.dark-mode .timed-practice-btn:hover {
+  background-color: #55DD55;
+}
+
+.dark-mode .timed-practice-result {
+  background-color: #333;
+  color: #ccc;
+  border-color: #77FF77;
+}
+
+.dark-mode .timed-practice-result h3 {
+  color: #77FF77;
+}
+
+.dark-mode .timed-practice-result .result-stats span {
+  color: #77FF77;
+}
+
+.dark-mode .timed-practice-result button {
+  background-color: #77FF77;
+  color: #333;
+}
+
+.dark-mode .timed-practice-result button:hover {
+  background-color: #55DD55;
+}
+
 /* workspace */
 .workspace {
   margin: auto;
@@ -224,37 +424,6 @@ body {
   width: 100%;
 }
 
-/* wx */
-.wx {
-  min-width: 160px;
-  position: relative;
-  float: right;
-  right: 20px;
-  z-index: 1;
-}
-
-.wx #wx-title {
-  font-weight: bold;
-  font-style: italic;
-  font-size: 14px;
-  color: #777;
-}
-
-.wx #wx-name {
-  font-weight: bold;
-  color: #319A31;
-  margin-left: 0;
-}
-
-.wx #wx-qr {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  width: 250px;
-  height: 250px;
-  border: dashed #777 1px;
-  z-index: 1;
-}
 
 /* copyright */
 .copyright {
@@ -289,39 +458,6 @@ body {
   font-style: italic;
 }
 
-/* pay */
-.pays {
-  clear: both;
-}
-
-.pays .pay-title {
-  margin-left: 25px;
-  font-weight: bold;
-  color: #777;
-}
-
-.pays .pay-name {
-  font-weight: bold;
-  margin-left: 10px;
-}
-
-.pays #alipay {
-  color: #0087ff;
-}
-
-.pays #wxpay {
-  color: #319A31;
-}
-
-.pays img {
-  position: fixed;
-  bottom: 20px;
-  left: 20px;
-  width: 250px;
-  height: 250px;
-  border: dashed #777 1px;
-  z-index: 1;
-}
 
 /* dark mode */
 .dark-mode {

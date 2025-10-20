@@ -59,6 +59,11 @@ Shuang.app.action = {
 
     /** Listen Events **/
     document.addEventListener('keydown', e => {
+      // 如果焦点在输入框上，不阻止默认行为
+      if (e.target.tagName === 'INPUT' && (e.target.id === 'question-count' || e.target.id === 'time-limit')) {
+        return
+      }
+      
       if (['Backspace', 'Tab', 'Enter', ' '].includes(e.key)) {
         if (e.preventDefault) {
           e.preventDefault()
@@ -68,6 +73,11 @@ Shuang.app.action = {
       }
     })
     document.addEventListener('keyup', e => {
+      // 如果焦点在输入框上，不处理全局快捷键
+      if (e.target.tagName === 'INPUT' && (e.target.id === 'question-count' || e.target.id === 'time-limit')) {
+        return
+      }
+      
       this.keyPressed(e)
     })
     $('#pic-switcher').addEventListener('change', e => {
@@ -97,32 +107,16 @@ Shuang.app.action = {
     $('#bopomofo-switcher').addEventListener('change', e => {
       Shuang.app.setting.setBopomofo(e.target.checked)
     })
-    $('.pay-name#alipay').addEventListener('mouseover', () => {
-      Shuang.app.action.qrShow('alipay-qr')
+    
+    // 限时练习相关事件监听器
+    $('#toggle-timed-practice').addEventListener('click', e => {
+      this.toggleTimedPractice()
     })
-    $('#alipay-qr').addEventListener('click', e => {
-      Shuang.app.action.qrHide(e.target)
+    $('#start-timed-practice').addEventListener('click', e => {
+      this.startTimedPractice()
     })
-    $('#alipay-qr').addEventListener('mouseout', e => {
-      Shuang.app.action.qrHide(e.target)
-    })
-    $('.pay-name#wxpay').addEventListener('mouseover', () => {
-      Shuang.app.action.qrShow('wxpay-qr')
-    })
-    $('#wxpay-qr').addEventListener('click', e => {
-      Shuang.app.action.qrHide(e.target)
-    })
-    $('#wxpay-qr').addEventListener('mouseout', e => {
-      Shuang.app.action.qrHide(e.target)
-    })
-    $('#wx-name').addEventListener('mouseover', () => {
-      Shuang.app.action.qrShow('wx-qr')
-    })
-    $('#wx-qr').addEventListener('click', e => {
-      Shuang.app.action.qrHide(e.target)
-    })
-    $('#wx-qr').addEventListener('mouseout', e => {
-      Shuang.app.action.qrHide(e.target)
+    $('#stop-timed-practice').addEventListener('click', e => {
+      this.stopTimedPractice()
     })
     $('#dict').addEventListener('click', () => {
       Shuang.core.current.beforeJudge()
@@ -191,28 +185,166 @@ Shuang.app.action = {
         }
     }
   },
-  judge() {
-    const input = $('#a')
-    const btn = $('#btn')
-    const [sheng, yun] = input.value
-    if (yun && Shuang.core.current.judge(sheng, yun)) {
-      btn.onclick = () => this.next(true)
-      btn.innerText = Shuang.resource.emoji.right
-      return true
-    } else {
-      btn.onclick = () => this.redo(true)
-      btn.innerText = Shuang.resource.emoji.wrong
-      return false
-    }
-  },
   redo(noFocus) {
     $('#a').value = ''
     if (!noFocus) $('#a').focus()
     $('#btn').onclick = () => this.redo(noFocus)
     $('#btn').innerText = Shuang.resource.emoji.wrong
   },
+  toggleMoreSettingsVisible() {
+    $('#more-settings').style.display = $('#more-settings').style.display === 'block' ? 'none' : 'block'
+    $('#more-settings-switcher') .innerText = $('#more-settings').style.display === 'block' ? '收起更多' : '展开更多'
+  },
+  
+  // 限时练习相关方法
+  toggleTimedPractice() {
+    const panel = $('#timed-practice-panel')
+    const toggle = $('#toggle-timed-practice')
+    
+    if (panel.style.display === 'none' || panel.style.display === '') {
+      panel.style.display = 'block'
+      toggle.classList.add('active')
+      toggle.innerText = '关闭限时练习'
+    } else {
+      if (Shuang.app.timedPractice.isActive) {
+        this.stopTimedPractice()
+      }
+      panel.style.display = 'none'
+      toggle.classList.remove('active')
+      toggle.innerText = '限时练习'
+    }
+  },
+  
+  startTimedPractice() {
+    const questionCount = parseInt($('#question-count').value) || 10
+    const timeLimit = parseInt($('#time-limit').value) || 60
+    
+    if (questionCount < 1 || questionCount > 100) {
+      alert('题目数量必须在1-100之间')
+      return
+    }
+    
+    if (timeLimit < 10 || timeLimit > 600) {
+      alert('时间限制必须在10-600秒之间')
+      return
+    }
+    
+    // 初始化限时练习状态
+    Shuang.app.timedPractice.isActive = true
+    Shuang.app.timedPractice.totalQuestions = questionCount
+    Shuang.app.timedPractice.completedQuestions = 0
+    Shuang.app.timedPractice.correctAnswers = 0
+    Shuang.app.timedPractice.timeRemaining = timeLimit
+    Shuang.app.timedPractice.startTime = Date.now()
+    
+    // 更新UI
+    $('#timed-practice-panel').style.display = 'none'
+    $('#timed-practice-status').style.display = 'block'
+    $('#start-timed-practice').style.display = 'none'
+    $('#stop-timed-practice').style.display = 'inline-block'
+    $('#toggle-timed-practice').disabled = true
+    
+    // 更新状态显示
+    this.updateTimedPracticeStatus()
+    
+    // 开始计时器
+    this.startTimedPracticeTimer()
+    
+    // 开始第一题
+    this.next()
+  },
+  
+  stopTimedPractice() {
+    if (Shuang.app.timedPractice.timer) {
+      clearInterval(Shuang.app.timedPractice.timer)
+      Shuang.app.timedPractice.timer = null
+    }
+    
+    Shuang.app.timedPractice.isActive = false
+    
+    // 更新UI
+    $('#timed-practice-panel').style.display = 'block'
+    $('#timed-practice-status').style.display = 'none'
+    $('#start-timed-practice').style.display = 'inline-block'
+    $('#stop-timed-practice').style.display = 'none'
+    $('#toggle-timed-practice').disabled = false
+    
+    // 重置输入框
+    this.redo()
+  },
+  
+  startTimedPracticeTimer() {
+    Shuang.app.timedPractice.timer = setInterval(() => {
+      Shuang.app.timedPractice.timeRemaining--
+      this.updateTimedPracticeStatus()
+      
+      if (Shuang.app.timedPractice.timeRemaining <= 0) {
+        this.endTimedPractice(false) // 时间到，失败
+      }
+    }, 1000)
+  },
+  
+  updateTimedPracticeStatus() {
+    const minutes = Math.floor(Shuang.app.timedPractice.timeRemaining / 60)
+    const seconds = Shuang.app.timedPractice.timeRemaining % 60
+    $('#time-remaining').textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
+    
+    $('#completed-count').textContent = Shuang.app.timedPractice.completedQuestions
+    $('#total-count').textContent = Shuang.app.timedPractice.totalQuestions
+    
+    const accuracy = Shuang.app.timedPractice.completedQuestions > 0 
+      ? Math.round((Shuang.app.timedPractice.correctAnswers / Shuang.app.timedPractice.completedQuestions) * 100)
+      : 0
+    $('#accuracy').textContent = `${accuracy}%`
+  },
+  
+  endTimedPractice(success) {
+    this.stopTimedPractice()
+    
+    const isSuccess = success || Shuang.app.timedPractice.completedQuestions >= Shuang.app.timedPractice.totalQuestions
+    const accuracy = Shuang.app.timedPractice.completedQuestions > 0 
+      ? Math.round((Shuang.app.timedPractice.correctAnswers / Shuang.app.timedPractice.completedQuestions) * 100)
+      : 0
+    
+    this.showTimedPracticeResult(isSuccess, accuracy)
+  },
+  
+  showTimedPracticeResult(success, accuracy) {
+    // 创建结果弹窗
+    const resultDiv = document.createElement('div')
+    resultDiv.className = `timed-practice-result ${success ? 'success' : 'failure'}`
+    
+    const title = success ? '🎉 练习完成！' : '⏰ 时间到！'
+    const message = success ? '恭喜你完成了所有题目！' : '时间到了，练习结束。'
+    
+    resultDiv.innerHTML = `
+      <h3>${title}</h3>
+      <div class="result-stats">
+        <div>完成题目：<span>${Shuang.app.timedPractice.completedQuestions}</span> / <span>${Shuang.app.timedPractice.totalQuestions}</span></div>
+        <div>正确率：<span>${accuracy}%</span></div>
+        <div>用时：<span>${Math.round((Date.now() - Shuang.app.timedPractice.startTime) / 1000)}</span> 秒</div>
+      </div>
+      <button onclick="this.parentElement.remove()">关闭</button>
+      <button onclick="this.parentElement.remove(); Shuang.app.action.startTimedPractice()">再来一次</button>
+    `
+    
+    document.body.appendChild(resultDiv)
+  },
+  
+  // 重写next方法以支持限时练习
   next(noFocus) {
     this.redo(noFocus)
+    
+    // 如果是限时练习模式，检查是否完成
+    if (Shuang.app.timedPractice.isActive) {
+      Shuang.app.timedPractice.completedQuestions++
+      if (Shuang.app.timedPractice.completedQuestions >= Shuang.app.timedPractice.totalQuestions) {
+        this.endTimedPractice(true) // 完成所有题目，成功
+        return
+      }
+    }
+    
+    // 原有的next逻辑
     switch (Shuang.app.setting.config.mode) {
       case 'all-random':
         Shuang.core.current = Shuang.core.model.getRandom()
@@ -237,14 +369,26 @@ Shuang.app.action = {
     Shuang.core.current.beforeJudge()
     Shuang.app.setting.updateKeysHint()
   },
-  qrShow(targetId) {
-    $('#' + targetId).style.display = 'block'
-  },
-  qrHide(target) {
-    target.style.display = 'none'
-  },
-  toggleMoreSettingsVisible() {
-    $('#more-settings').style.display = $('#more-settings').style.display === 'block' ? 'none' : 'block'
-    $('#more-settings-switcher') .innerText = $('#more-settings').style.display === 'block' ? '收起更多' : '展开更多'
+  
+  // 重写judge方法以支持限时练习
+  judge() {
+    const input = $('#a')
+    const btn = $('#btn')
+    const [sheng, yun] = input.value
+    if (yun && Shuang.core.current.judge(sheng, yun)) {
+      btn.onclick = () => this.next(true)
+      btn.innerText = Shuang.resource.emoji.right
+      
+      // 如果是限时练习模式，记录正确答案
+      if (Shuang.app.timedPractice.isActive) {
+        Shuang.app.timedPractice.correctAnswers++
+      }
+      
+      return true
+    } else {
+      btn.onclick = () => this.redo(true)
+      btn.innerText = Shuang.resource.emoji.wrong
+      return false
+    }
   }
 }

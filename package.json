@@ -18,7 +18,13 @@
     "debug:css": "node scripts/copy.js src/style.css build/style.min.css",
     "debug:html": "node scripts/copy.js index.src.html index.html",
     "start": "npx serve",
-    "release": "node scripts/release.js"
+    "release": "node scripts/release.js",
+    "deploy:prepare": "node scripts/deploy.js prepare",
+    "deploy:upload": "node scripts/deploy.js upload",
+    "deploy": "npm run build && npm run deploy:prepare && npm run deploy:upload",
+    "deploy:scp:prepare": "node scripts/deploy-scp.js prepare",
+    "deploy:scp:upload": "node scripts/deploy-scp.js upload",
+    "deploy:scp": "npm run build && npm run deploy:scp:prepare && npm run deploy:scp:upload"
   },
   "repository": {
     "type": "git",
